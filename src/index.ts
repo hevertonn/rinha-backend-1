@@ -1,5 +1,18 @@
-function validadePerson(body: any) {
-  console.log(body)
+import postgres from "postgres";
+
+const db = postgres(`postgres://postgres:1234@localhost:5432/rinha`)
+
+async function validadeData(data: any) {
+  if (data.apelido && data.name) {
+    const apelidoInDb = await db`
+      SELECT apelido FROM rinha
+      WHERE apelido = ${data.apelido}
+      `
+
+    console.log(apelidoInDb)
+  }
+
+
 }
 
 const server = Bun.serve({
@@ -14,7 +27,8 @@ const server = Bun.serve({
     }
 
     if (url.pathname === path.postPerson && req.method === "POST") {
-      validadePerson(req.body)
+      const data = await req.json()
+      validadeData(data)
       return new Response("Ok")
     }
 
@@ -41,4 +55,4 @@ const server = Bun.serve({
   },
 })
 
-console.log(`Server running on ${server.url.origin}`)
+console.log(`Server running on ${server.url}`)

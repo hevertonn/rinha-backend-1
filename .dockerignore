@@ -1,0 +1,11 @@
+.git
+node_modules
+.gitignore
+README.md
+LICENSE
+bun.lockb
+docker-compose.yml
+init.sql
+nginx.conf
+.dockerignore
+Dockerfile
