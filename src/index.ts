@@ -1,18 +1,44 @@
 import postgres from "postgres";
 
-const db = postgres(`postgres://postgres:1234@localhost:5432/rinha`)
+const db = postgres(`postgres://postgres:1234@db:5432/rinha`)
 
-async function validadeData(data: any) {
-  if (data.apelido && data.name) {
-    const apelidoInDb = await db`
-      SELECT apelido FROM rinha
-      WHERE apelido = ${data.apelido}
-      `
-
-    console.log(apelidoInDb)
+function validateStack(stack: any) {
+  if (stack) {
+    for (let e in stack) {
+      if (typeof (e) != "string") {
+        return true
+      }
+    }
   }
 
+}
 
+async function validateData(data: any) {
+  if (!data.apelido || !data.nome) {
+    return new Response("Apelido e nome são necessários.", { status: 422 })
+  }
+
+  const apelidoExists = await db`
+      SELECT apelido FROM pessoas
+      WHERE apelido = ${data.apelido}
+    `
+
+  if (apelidoExists) {
+    return new Response("Apelido já existe.", { status: 422 })
+  }
+
+  if (typeof (data.nome) != "string" || validateStack(data.stack)) {
+    return new Response("Sintaxe invalida.", { status: 400 })
+  }
+}
+
+async function createPerson(data: any) {
+  const uuid = await db`
+    INSERT INTO pessoas (id, apelido, nome, nascimento, stack)
+    VALUES ${crypto.randomUUID()} ${data.apelido} ${data.nome} ${data.nascimento} ${data.stack}
+    returning id
+  `
+  return uuid[0]
 }
 
 const server = Bun.serve({
@@ -28,23 +54,31 @@ const server = Bun.serve({
 
     if (url.pathname === path.postPerson && req.method === "POST") {
       const data = await req.json()
-      validadeData(data)
-      return new Response("Ok")
+      const nonValid = await validateData(data)
+
+      if (nonValid) {
+        return nonValid
+      }
+
+      const uuid = await createPerson(data)
+
+      return new Response(null, {
+        headers: {
+          "Location": url.origin + path.getPersonById + uuid
+        }
+      })
     }
 
     if (url.pathname.includes(path.getPersonById) && req.method === "GET") {
       const id = url.href.replace(url.origin + path.getPersonById, "")
-
-      console.log(id)
-      return new Response("Ok")
+      return new Response(id)
     }
 
     if (url.pathname.includes(path.getPersonByQuery) && req.method === "GET") {
       const queryParams = url.href.replace(url.origin +
         path.getPersonByQuery + "?t=", "").split(",")
 
-      console.log(queryParams)
-      return new Response("Ok")
+      return new Response("Params = " + queryParams)
     }
 
     if (url.pathname === path.getPersonNumber && req.method === "GET") {

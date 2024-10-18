@@ -2,8 +2,8 @@ services:
   api1: &api
     build: .
     hostname: api1
-    # depends_on:
-    #   - db
+    depends_on:
+      - db
     environment:
       PORT: 8080
     deploy:
@@ -33,16 +33,16 @@ services:
           cpus: "0.25"
           memory: "0.5GB"
 
-  # db: # Banco de dados
-  #   image: postgres
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: 1234
-  #     POSTGRES_DB: rinha
-  #   volumes:
-  #     - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: "0.75"
-  #         memory: "1.5GB"
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: rinha
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: "1.5GB"
