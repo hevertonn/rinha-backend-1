@@ -3,14 +3,11 @@ import postgres from "postgres";
 const db = postgres(`postgres://postgres:1234@db:5432/rinha`)
 
 function validateStack(stack: any) {
-  if (stack) {
-    for (let e in stack) {
-      if (typeof (e) != "string") {
-        return true
-      }
+  for (let e of stack) {
+    if (typeof (e) != "string") {
+      return true
     }
   }
-
 }
 
 async function validateData(data: any) {
@@ -18,27 +15,27 @@ async function validateData(data: any) {
     return new Response("Apelido e nome são necessários.", { status: 422 })
   }
 
+  if (typeof (data.nome) != "string" || validateStack(data.stack)) {
+    return new Response("Sintaxe invalida.", { status: 400 })
+  }
+
   const apelidoExists = await db`
       SELECT apelido FROM pessoas
       WHERE apelido = ${data.apelido}
     `
 
-  if (apelidoExists) {
+  if (apelidoExists.length != 0) {
     return new Response("Apelido já existe.", { status: 422 })
-  }
-
-  if (typeof (data.nome) != "string" || validateStack(data.stack)) {
-    return new Response("Sintaxe invalida.", { status: 400 })
   }
 }
 
 async function createPerson(data: any) {
-  const uuid = await db`
+  const person = await db`
     INSERT INTO pessoas (id, apelido, nome, nascimento, stack)
-    VALUES ${crypto.randomUUID()} ${data.apelido} ${data.nome} ${data.nascimento} ${data.stack}
+    VALUES (${crypto.randomUUID()}, ${data.apelido}, ${data.nome}, ${data.nascimento}, ${data.stack})
     returning id
   `
-  return uuid[0]
+  return person[0]
 }
 
 const server = Bun.serve({
@@ -54,24 +51,29 @@ const server = Bun.serve({
 
     if (url.pathname === path.postPerson && req.method === "POST") {
       const data = await req.json()
-      const nonValid = await validateData(data)
+      const notValid = await validateData(data)
 
-      if (nonValid) {
-        return nonValid
+      if (notValid) {
+        return notValid
       }
 
-      const uuid = await createPerson(data)
+      const person = await createPerson(data)
 
       return new Response(null, {
         headers: {
-          "Location": url.origin + path.getPersonById + uuid
+          "Location": url.origin + path.getPersonById + person.id
         }
       })
     }
 
     if (url.pathname.includes(path.getPersonById) && req.method === "GET") {
       const id = url.href.replace(url.origin + path.getPersonById, "")
-      return new Response(id)
+      // return new Response(id)
+
+      const people = await db`
+        Select * From pessoas;
+      `
+      return Response.json(people)
     }
 
     if (url.pathname.includes(path.getPersonByQuery) && req.method === "GET") {
