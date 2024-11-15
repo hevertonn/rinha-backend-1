@@ -68,12 +68,12 @@ const server = Bun.serve({
 
     if (url.pathname.includes(path.getPersonById) && req.method === "GET") {
       const id = url.href.replace(url.origin + path.getPersonById, "")
-      // return new Response(id)
 
       const people = await db`
-        Select * From pessoas;
+        SELECT * FROM pessoas
+        WHERE id = ${id};
       `
-      return Response.json(people)
+      return Response.json(people[0])
     }
 
     if (url.pathname.includes(path.getPersonByQuery) && req.method === "GET") {
