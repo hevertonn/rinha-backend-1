@@ -77,14 +77,25 @@ const server = Bun.serve({
     }
 
     if (url.pathname.includes(path.getPersonByQuery) && req.method === "GET") {
-      const queryParams = url.href.replace(url.origin +
-        path.getPersonByQuery + "?t=", "").split(",")
+      if (url.href.includes("?t=") == false) {
+        return new Response("Parametro de busca não informado.", { status: 400 })
+      }
 
-      return new Response("Params = " + queryParams)
+      let queryParams = url.href.replace(url.origin +
+        path.getPersonByQuery + "?t=", "")
+
+      const people = await db`
+        SELECT * FROM pessoas
+        WHERE apelido ILIKE ${"%" + queryParams + "%"} OR
+        nome ILIKE ${"%" + queryParams + "%"} OR
+        stack ILIKE ${"%" + queryParams + "%"}
+        LIMIT 50;
+      `
+
+      return Response.json(people)
     }
 
     if (url.pathname === path.getPersonNumber && req.method === "GET") {
-      return new Response("Ok")
     }
 
     return new Response("Path not found", { status: 404 })
