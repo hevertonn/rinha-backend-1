@@ -12,11 +12,11 @@ function validateStack(stack: any) {
 
 async function validateData(data: any) {
   if (!data.apelido || !data.nome) {
-    return new Response("Apelido e nome são necessários.", { status: 422 })
+    return new Response(null, { status: 422 })
   }
 
   if (typeof (data.nome) != "string" || validateStack(data.stack)) {
-    return new Response("Sintaxe invalida.", { status: 400 })
+    return new Response(null, { status: 400 })
   }
 
   const apelidoExists = await db`
@@ -25,7 +25,7 @@ async function validateData(data: any) {
     `
 
   if (apelidoExists.length != 0) {
-    return new Response("Apelido já existe.", { status: 422 })
+    return new Response(null, { status: 422 })
   }
 }
 
@@ -49,7 +49,7 @@ const server = Bun.serve({
       getPersonNumber: "/contagem-pessoas"
     }
 
-    if (url.pathname === path.postPerson && req.method === "POST") {
+    if (url.pathname == path.postPerson && req.method == "POST") {
       const data = await req.json()
       const notValid = await validateData(data)
 
@@ -66,22 +66,22 @@ const server = Bun.serve({
       })
     }
 
-    if (url.pathname.includes(path.getPersonById) && req.method === "GET") {
+    if (url.pathname.includes(path.getPersonById) && req.method == "GET") {
       const id = url.href.replace(url.origin + path.getPersonById, "")
 
-      const people = await db`
+      const person = await db`
         SELECT * FROM pessoas
         WHERE id = ${id};
       `
-      return Response.json(people[0])
+      return Response.json(person[0])
     }
 
-    if (url.pathname.includes(path.getPersonByQuery) && req.method === "GET") {
+    if (url.pathname.includes(path.getPersonByQuery) && req.method == "GET") {
       if (url.href.includes("?t=") == false) {
-        return new Response("Parametro de busca não informado.", { status: 400 })
+        return new Response(null, { status: 400 })
       }
 
-      let queryParams = url.href.replace(url.origin +
+      const queryParams = url.href.replace(url.origin +
         path.getPersonByQuery + "?t=", "")
 
       const people = await db`
@@ -95,10 +95,15 @@ const server = Bun.serve({
       return Response.json(people)
     }
 
-    if (url.pathname === path.getPersonNumber && req.method === "GET") {
+    if (url.pathname == path.getPersonNumber && req.method == "GET") {
+      const numberOfPersons = await db`
+        SELECT COUNT(*) FROM pessoas;
+      `
+
+      return new Response(numberOfPersons[0].count)
     }
 
-    return new Response("Path not found", { status: 404 })
+    return new Response(null, { status: 404 })
   },
 })
 
