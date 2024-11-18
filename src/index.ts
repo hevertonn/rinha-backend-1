@@ -3,15 +3,21 @@ import postgres from "postgres";
 const db = postgres(`postgres://postgres:1234@db:5432/rinha`)
 
 function validateStack(stack: any) {
-  for (let e of stack) {
-    if (typeof (e) != "string") {
-      return true
+  if (Array.isArray(stack)) {
+    for (let e of stack) {
+      if (typeof (e) != "string" || e.length > 32) {
+        return true
+      }
     }
+  } else {
+    if (typeof (stack) != "string" || stack.length > 32)
+      return true
   }
 }
 
 async function validateData(data: any) {
-  if (!data.apelido || !data.nome) {
+  if (!data.apelido || !data.nome ||
+    data.apelido.length > 32 || data.nome.length > 100) {
     return new Response(null, { status: 422 })
   }
 
@@ -60,6 +66,7 @@ const server = Bun.serve({
       const person = await createPerson(data)
 
       return new Response(null, {
+        status: 201,
         headers: {
           "Location": url.origin + path.getPersonById + person.id
         }
