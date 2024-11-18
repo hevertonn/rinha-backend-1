@@ -16,8 +16,8 @@ function validateStack(stack: any) {
 }
 
 async function validateData(data: any) {
-  if (!data.apelido || !data.nome ||
-    data.apelido.length > 32 || data.nome.length > 100) {
+  if (!data.apelido || !data.nome || !data.data ||
+    data.apelido.length > 32 || data.nome.length > 100 || Number.isNaN(Date.parse(data.data))) {
     return new Response(null, { status: 422 })
   }
 
