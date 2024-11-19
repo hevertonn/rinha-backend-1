@@ -46,3 +46,11 @@ services:
         limits:
           cpus: "0.75"
           memory: "1.5GB"
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: email@email.com
+      PGADMIN_DEFAULT_PASSWORD: 1234
+    ports:
+      - 80:80

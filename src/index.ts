@@ -1,6 +1,8 @@
 import postgres from "postgres";
 
-const db = postgres(`postgres://postgres:1234@db:5432/rinha`)
+// const db = postgres(`postgres://postgres:1234@db:5432/rinha`)
+
+const db = postgres(`postgres://postgres:1234@localhost:5432/rinha`)
 
 function validateStack(stack: any) {
   if (Array.isArray(stack)) {
@@ -16,8 +18,8 @@ function validateStack(stack: any) {
 }
 
 async function validateData(data: any) {
-  if (!data.apelido || !data.nome || !data.data ||
-    data.apelido.length > 32 || data.nome.length > 100 || Number.isNaN(Date.parse(data.data))) {
+  if (!data.apelido || !data.nome || !data.nascimento ||
+    data.apelido.length > 32 || data.nome.length > 100 || Number.isNaN(Date.parse(data.nascimento))) {
     return new Response(null, { status: 422 })
   }
 
