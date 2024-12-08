@@ -6,11 +6,12 @@ services:
       - db
     environment:
       PORT: 8080
+    network_mode: host
     deploy:
       resources:
         limits:
-          cpus: "0.25"
-          memory: "0.5GB"
+          cpus: "0.2"
+          memory: "0.4GB"
 
   api2:
     <<: *api
@@ -25,13 +26,12 @@ services:
     depends_on:
       - api1
       - api2
-    ports:
-      - "9999:9999"
+    network_mode: host
     deploy:
       resources:
         limits:
-          cpus: "0.25"
-          memory: "0.5GB"
+          cpus: "0.3"
+          memory: "0.6GB"
 
   db:
     image: postgres
@@ -41,8 +41,9 @@ services:
       POSTGRES_DB: rinha
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    network_mode: host
     deploy:
       resources:
         limits:
-          cpus: "0.75"
-          memory: "1.5GB"
+          cpus: "0.8"
+          memory: "1.6GB"

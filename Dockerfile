@@ -8,4 +8,6 @@ RUN bun install
 
 COPY . .
 
+RUN bun run build
+
 ENTRYPOINT ["bun", "start"]
