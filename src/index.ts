@@ -26,23 +26,23 @@ async function validateData(data: any) {
     return new Response(null, { status: 400 })
   }
 
-  const apelidoExists = await db`
+  const apelido = await db`
       SELECT apelido FROM pessoas
       WHERE apelido = ${data.apelido}
     `
 
-  if (apelidoExists.length != 0) {
+  if (apelido.length != 0) {
     return new Response(null, { status: 422 })
   }
 }
 
 async function createPerson(data: any) {
+  const id = crypto.randomUUID()
   const person = await db`
     INSERT INTO pessoas (id, apelido, nome, nascimento, stack)
-    VALUES (${crypto.randomUUID()}, ${data.apelido}, ${data.nome}, ${data.nascimento}, ${data.stack})
-    returning id
+    VALUES (${id}, ${data.apelido}, ${data.nome}, ${data.nascimento}, ${data.stack})
   `
-  return person[0]
+  return id
 }
 
 const server = Bun.serve({
@@ -64,17 +64,17 @@ const server = Bun.serve({
         return notValid
       }
 
-      const person = await createPerson(data)
+      const id = await createPerson(data)
 
       return new Response(null, {
         status: 201,
         headers: {
-          "Location": url.origin + path.getPersonById + person.id
+          "Location": url.origin + path.getPersonById + id
         }
       })
     }
 
-    if (url.pathname.includes(path.getPersonById) && req.method == "GET") {
+    if (url.pathname.startsWith(path.getPersonById) && req.method == "GET") {
       const id = url.href.replace(url.origin + path.getPersonById, "")
 
       const person = await db`
@@ -84,7 +84,7 @@ const server = Bun.serve({
       return Response.json(person[0])
     }
 
-    if (url.pathname.includes(path.getPersonByQuery) && req.method == "GET") {
+    if (url.pathname.startsWith(path.getPersonByQuery) && req.method == "GET") {
       if (url.href.includes("?t=") == false) {
         return new Response(null, { status: 400 })
       }
@@ -92,15 +92,13 @@ const server = Bun.serve({
       const queryParams = url.href.replace(url.origin +
         path.getPersonByQuery + "?t=", "")
 
-      const people = await db`
+      const data = await db`
         SELECT * FROM pessoas
-        WHERE apelido ILIKE ${"%" + queryParams + "%"} OR
-        nome ILIKE ${"%" + queryParams + "%"} OR
-        stack ILIKE ${"%" + queryParams + "%"}
+        WHERE person_search ILIKE ${"%" + queryParams + "%"}
         LIMIT 50;
       `
 
-      return Response.json(people)
+      return Response.json(data)
     }
 
     if (url.pathname == path.getPersonNumber && req.method == "GET") {
